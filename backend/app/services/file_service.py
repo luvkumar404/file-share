@@ -4,6 +4,7 @@ from app.core.config import settings
 from app.utils.tokens import create_safe_filename, get_extension
 
 ALLOWED_EXTENSIONS = {"pdf", "docx", "txt", "png", "jpg", "jpeg"}
+IMAGE_EXTENSIONS = {"png", "jpg", "jpeg"}
 
 
 async def validate_and_read_upload(upload: UploadFile) -> tuple[bytes, str, str]:
@@ -27,4 +28,11 @@ async def validate_and_read_upload(upload: UploadFile) -> tuple[bytes, str, str]
 
 
 def build_cloudinary_public_id(user_id: int, stored_filename: str) -> str:
-    return f"secure_file_sharing/users/{user_id}/{stored_filename}"
+    filename_without_extension = stored_filename.rsplit(".", 1)[0]
+    return f"secure_file_sharing/users/{user_id}/{filename_without_extension}"
+
+
+def get_cloudinary_resource_type(extension: str) -> str:
+    if extension.lower() in IMAGE_EXTENSIONS:
+        return "image"
+    return "raw"

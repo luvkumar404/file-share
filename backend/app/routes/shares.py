@@ -8,7 +8,7 @@ from app.core.database import get_db
 from app.core.security import hash_password, verify_password
 from app.models.access_log import AccessLog
 from app.models.file import File
-from app.models.share import ShareLink
+from app.models.share_link import ShareLink
 from app.models.user import User
 from app.routes.dependencies import get_current_user
 from app.schemas.share import PublicDownloadRequest, PublicDownloadResponse, ShareCreate, ShareRead
@@ -100,6 +100,7 @@ def download_shared_file(
     download_url = create_signed_download_url(
         file_record.cloudinary_public_id,
         file_record.cloudinary_resource_type,
+        file_record.extension,
         int(share_link.expires_at.timestamp()),
     )
     write_access_log(db, "download", request, file_id=file_record.id)

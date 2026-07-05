@@ -1,8 +1,9 @@
 from io import BytesIO
+from pathlib import PurePosixPath
 
 import cloudinary
 import cloudinary.uploader
-from cloudinary.utils import cloudinary_url
+from cloudinary.utils import private_download_url
 
 from app.core.config import settings
 
@@ -14,12 +15,12 @@ cloudinary.config(
 )
 
 
-def upload_file(file_bytes: bytes, public_id: str) -> dict:
+def upload_file(file_bytes: bytes, public_id: str, resource_type: str) -> dict:
     file_stream = BytesIO(file_bytes)
     return cloudinary.uploader.upload(
         file_stream,
         public_id=public_id,
-        resource_type="auto",
+        resource_type=resource_type,
         overwrite=False,
         type="authenticated",
     )
@@ -34,13 +35,26 @@ def delete_file(public_id: str, resource_type: str) -> None:
     )
 
 
-def create_signed_download_url(public_id: str, resource_type: str, expires_at: int) -> str:
-    url, _ = cloudinary_url(
-        public_id,
+def create_signed_download_url(
+    public_id: str,
+    resource_type: str,
+    extension: str,
+    expires_at: int,
+) -> str:
+    clean_public_id = remove_extension_from_public_id(public_id, extension)
+    return private_download_url(
+        clean_public_id,
+        extension.lower(),
         resource_type=resource_type,
         type="authenticated",
-        sign_url=True,
         expires_at=expires_at,
-        secure=True,
+        attachment=True,
     )
-    return url
+
+
+def remove_extension_from_public_id(public_id: str, extension: str) -> str:
+    suffix = f".{extension.lower()}"
+    path = PurePosixPath(public_id)
+    if path.name.lower().endswith(suffix):
+        return str(path.with_name(path.name[: -len(suffix)]))
+    return public_id

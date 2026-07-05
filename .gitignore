@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+backend/.env
+frontend/.env
 
 # Python
 __pycache__/
@@ -12,6 +14,7 @@ __pycache__/
 
 # Virtual environments
 .venv/
+backend/.venv/
 venv/
 env/
 
@@ -19,13 +22,29 @@ env/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.vite/
 .coverage
+coverage/
 htmlcov/
 
 # Build artifacts
 build/
 dist/
 *.egg-info/
+
+# Node frontend
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/*.log
+dist/
+*.log
+*.log.*
+*.tmp
+*.temp
+tmp/
+temp/
 
 # Alembic/runtime local files
 *.sqlite3

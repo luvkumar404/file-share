@@ -1,130 +1,121 @@
-# Secure File Sharing Backend
+# Secure File Sharing Project
 
-A simple FastAPI backend for authenticated file uploads, Cloudinary storage, malware scanning, secure share links, and access logging.
+Full-stack secure file-sharing app with a FastAPI backend and a React + Vite frontend.
 
-## Features
+## Tech Stack
 
-- User registration and login
-- JWT access-token authentication
-- Password hashing with bcrypt/passlib
-- PostgreSQL database with SQLAlchemy ORM
-- Alembic migrations
-- Authenticated file upload
-- File size and extension validation
-- Safe generated file names
-- ClamAV malware scanning when available
-- Cloudinary storage using authenticated assets
-- Owner-only file listing, detail, and delete
-- Expiring share links with optional passwords
-- Revoked share-link support
-- Upload, download, share creation, and delete access logs
+- Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic, JWT, Cloudinary, ClamAV-compatible malware scanning
+- Frontend: React, Vite, Tailwind CSS, TanStack Query, React Hook Form, Zod
 
 ## Project Structure
 
 ```text
 backend/
   app/
-    main.py
     core/
     models/
-    schemas/
     routes/
+    schemas/
     services/
     utils/
+    main.py
   migrations/
+    versions/
   alembic.ini
-requirements.txt
-.env.example
+  .env.example
+  requirements.txt
+  README.md
+frontend/
+  public/
+  src/
+    api/
+    components/
+    context/
+    hooks/
+    pages/
+    routes/
+    utils/
+  .env.example
+  package.json
+  README.md
 ```
 
-## Setup
-
-1. Create and activate a virtual environment.
+## Backend Setup
 
 ```bash
+cd backend
 python -m venv .venv
 .venv\Scripts\activate
-```
-
-2. Install dependencies.
-
-```bash
 pip install -r requirements.txt
+copy .env.example .env
+alembic upgrade head
+uvicorn app.main:app --reload
 ```
 
-3. Create a PostgreSQL database.
+Backend API docs are available at `http://127.0.0.1:8000/docs`.
 
-```sql
-CREATE DATABASE fileshare;
-```
-
-4. Copy `.env.example` to `.env` and fill in your values.
+## Frontend Setup
 
 ```bash
+cd frontend
+npm install
 copy .env.example .env
+npm run dev
 ```
 
-Required values:
+Vite usually serves the app at `http://localhost:5173`.
+
+## Alembic
+
+Run migrations:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+Create a migration after SQLAlchemy model changes:
+
+```bash
+cd backend
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+```
+
+Alembic loads all models through `app.models`, so keep new model imports registered in `backend/app/models/__init__.py`.
+
+## Environment Variables
+
+Backend variables in `backend/.env`:
 
 ```text
-DATABASE_URL=
-JWT_SECRET_KEY=
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/fileshare
+JWT_SECRET_KEY=change-this-to-a-long-random-secret
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
-FRONTEND_URL=
+MAX_FILE_SIZE_MB=10
+FRONTEND_URL=http://localhost:5173
 ```
 
-5. Apply migrations.
-
-```bash
-alembic -c backend/alembic.ini upgrade head
-```
-
-6. Run the API.
-
-```bash
-uvicorn app.main:app --app-dir backend --reload
-```
-
-Open the API docs at:
+Frontend variables in `frontend/.env`:
 
 ```text
-http://127.0.0.1:8000/docs
+VITE_API_BASE_URL=http://localhost:8000
 ```
 
-## Malware Scanning
+## API Overview
 
-The scanner uses `clamscan` when ClamAV is installed and available in your system path.
-
-If ClamAV is not installed, the placeholder scanner allows uploads so the project can run locally. For production, install ClamAV and keep it updated.
-
-## Example API Routes
-
-### Authentication
-
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me`
-
-### Files
-
-- `POST /files`
-- `GET /files`
-- `GET /files/{file_id}`
-- `DELETE /files/{file_id}`
-
-### Shares
-
-- `POST /shares/files/{file_id}`
-- `POST /shares/{token}/download`
-- `POST /shares/{share_id}/revoke`
+- Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
+- Files: `POST /files`, `GET /files`, `GET /files/{file_id}`, `DELETE /files/{file_id}`
+- Shares: `POST /shares/files/{file_id}`, `POST /shares/{token}/download`, `POST /shares/{share_id}/revoke`
 
 ## Notes
 
-- Original filenames are never trusted for storage.
-- Uploaded files are stored with generated unique filenames.
-- Private Cloudinary asset URLs are not returned from file-management endpoints.
-- Public access goes through the share-token download endpoint.
-- CORS allows only the `FRONTEND_URL` configured in `.env`.
-- Do not commit your `.env` file.
+- PostgreSQL is the only configured database.
+- There is no MongoDB, Motor, Redis, or Dockerfile requirement in this project.
+- Cloudinary credentials are required for real file storage.
+- The malware scanner tries `clamd` first and falls back to a local scanner path where configured by the service code.
+- Do not commit `.env`, virtual environments, build output, caches, logs, or `node_modules`.

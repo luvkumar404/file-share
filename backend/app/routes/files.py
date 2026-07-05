@@ -9,7 +9,11 @@ from app.models.user import User
 from app.routes.dependencies import get_current_user
 from app.schemas.file import FileRead
 from app.services import cloudinary_service
-from app.services.file_service import build_cloudinary_public_id, validate_and_read_upload
+from app.services.file_service import (
+    build_cloudinary_public_id,
+    get_cloudinary_resource_type,
+    validate_and_read_upload,
+)
 from app.services.malware_scanner import malware_scanner
 
 router = APIRouter()
@@ -50,7 +54,8 @@ async def upload_file(
         raise HTTPException(status_code=400, detail=scan_result.message)
 
     public_id = build_cloudinary_public_id(current_user.id, stored_filename)
-    upload_result = cloudinary_service.upload_file(file_bytes, public_id)
+    resource_type = get_cloudinary_resource_type(extension)
+    upload_result = cloudinary_service.upload_file(file_bytes, public_id, resource_type)
 
     file_record = File(
         owner_id=current_user.id,
