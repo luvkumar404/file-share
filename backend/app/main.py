@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routes import auth, files, shares
 
-app = FastAPI(title="Secure File Sharing API", version="1.0.0")
+app = FastAPI(title="Secure File Sharing", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,

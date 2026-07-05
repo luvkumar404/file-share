@@ -1,11 +1,49 @@
-# Secure File Sharing Project
+# Secure File Sharing
 
-Full-stack secure file-sharing app with a FastAPI backend and a React + Vite frontend.
+A full-stack secure file-sharing application for uploading private files, scanning uploads, storing them in Cloudinary, and sharing them through expiring public links. Users can register, log in, manage their own files, create optional password-protected share links, revoke links, and download shared files through controlled API endpoints.
+
+The project is intentionally split into a FastAPI backend and a React + Vite frontend. PostgreSQL is the only configured database. MongoDB, Motor, Redis, and Docker are not part of the current setup.
+
+## Features
+
+- Email/password registration and login
+- JWT-based authentication
+- PostgreSQL persistence with SQLAlchemy ORM
+- Alembic database migrations
+- Private file metadata management
+- Cloudinary-backed file storage
+- Malware scanning through a ClamAV-compatible scanner
+- Expiring share links with optional passwords
+- Share revocation
+- Basic access logging for file actions
+- React dashboard for upload, listing, details, and public shares
 
 ## Tech Stack
 
-- Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic, JWT, Cloudinary, ClamAV-compatible malware scanning
-- Frontend: React, Vite, Tailwind CSS, TanStack Query, React Hook Form, Zod
+Backend:
+
+- FastAPI
+- PostgreSQL
+- SQLAlchemy
+- Alembic
+- Pydantic and pydantic-settings
+- PyJWT
+- passlib with bcrypt
+- Cloudinary
+- clamd
+
+Frontend:
+
+- React
+- Vite
+- Tailwind CSS
+- React Router
+- Axios
+- TanStack Query
+- React Hook Form
+- Zod
+- Lucide React
+- React Hot Toast
 
 ## Project Structure
 
@@ -40,7 +78,23 @@ frontend/
   README.md
 ```
 
+## Prerequisites
+
+- Python 3.11 or newer
+- Node.js 20 or newer
+- PostgreSQL
+- Cloudinary account credentials
+- ClamAV or a compatible scanning setup for production use
+
 ## Backend Setup
+
+Create a PostgreSQL database first. Example:
+
+```sql
+CREATE DATABASE fileshare;
+```
+
+Install backend dependencies and create the local environment file:
 
 ```bash
 cd backend
@@ -52,7 +106,12 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Backend API docs are available at `http://127.0.0.1:8000/docs`.
+The API runs at `http://127.0.0.1:8000`.
+
+API docs:
+
+- Swagger UI: `http://127.0.0.1:8000/docs`
+- ReDoc: `http://127.0.0.1:8000/redoc`
 
 ## Frontend Setup
 
@@ -64,25 +123,6 @@ npm run dev
 ```
 
 Vite usually serves the app at `http://localhost:5173`.
-
-## Alembic
-
-Run migrations:
-
-```bash
-cd backend
-alembic upgrade head
-```
-
-Create a migration after SQLAlchemy model changes:
-
-```bash
-cd backend
-alembic revision --autogenerate -m "describe change"
-alembic upgrade head
-```
-
-Alembic loads all models through `app.models`, so keep new model imports registered in `backend/app/models/__init__.py`.
 
 ## Environment Variables
 
@@ -106,16 +146,85 @@ Frontend variables in `frontend/.env`:
 VITE_API_BASE_URL=http://localhost:8000
 ```
 
+Never commit real `.env` files or production secrets.
+
+## Database Migrations
+
+Run migrations:
+
+```bash
+cd backend
+alembic upgrade head
+```
+
+Create a migration after SQLAlchemy model changes:
+
+```bash
+cd backend
+alembic revision --autogenerate -m "describe change"
+alembic upgrade head
+```
+
+Alembic loads all models through `app.models`, so keep new model imports registered in `backend/app/models/__init__.py`.
+
 ## API Overview
 
-- Auth: `POST /auth/register`, `POST /auth/login`, `GET /auth/me`
-- Files: `POST /files`, `GET /files`, `GET /files/{file_id}`, `DELETE /files/{file_id}`
-- Shares: `POST /shares/files/{file_id}`, `POST /shares/{token}/download`, `POST /shares/{share_id}/revoke`
+Authentication:
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `GET /auth/me`
+
+Files:
+
+- `POST /files`
+- `GET /files`
+- `GET /files/{file_id}`
+- `DELETE /files/{file_id}`
+
+Shares:
+
+- `POST /shares/files/{file_id}`
+- `POST /shares/{token}/download`
+- `POST /shares/{share_id}/revoke`
+
+## Development Workflow
+
+Backend:
+
+```bash
+cd backend
+.venv\Scripts\activate
+uvicorn app.main:app --reload
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Build frontend:
+
+```bash
+cd frontend
+npm run build
+```
+
+## Contribution Guidelines
+
+1. Keep backend code inside `backend/app` using the existing `core`, `models`, `routes`, `schemas`, `services`, and `utils` folders.
+2. Keep frontend code inside `frontend/src` using the existing `api`, `components`, `context`, `hooks`, `pages`, `routes`, and `utils` folders.
+3. Add or update Alembic migrations when SQLAlchemy models change.
+4. Do not commit `.env`, `.venv`, `node_modules`, `dist`, logs, caches, or generated temporary files.
+5. Keep dependencies focused on the current stack. Do not add MongoDB, Motor, Redis, or Docker-specific files unless the project scope changes.
+6. Run the backend and frontend locally before opening a pull request.
+7. Update this README when setup steps, environment variables, or major API behavior changes.
 
 ## Notes
 
 - PostgreSQL is the only configured database.
-- There is no MongoDB, Motor, Redis, or Dockerfile requirement in this project.
 - Cloudinary credentials are required for real file storage.
-- The malware scanner tries `clamd` first and falls back to a local scanner path where configured by the service code.
-- Do not commit `.env`, virtual environments, build output, caches, logs, or `node_modules`.
+- The malware scanner tries `clamd` first and falls back according to the backend scanner service.
+- Local development can run without committing generated files because `.gitignore` excludes environment files, virtual environments, dependency folders, caches, logs, and builds.
