@@ -2,7 +2,7 @@
 
 A full-stack secure file-sharing application for uploading private files, scanning uploads, storing them in Cloudinary, and sharing them through expiring public links. Users can register, log in, manage their own files, create optional password-protected share links, revoke links, and download shared files through controlled API endpoints.
 
-The project is intentionally split into a FastAPI backend and a React + Vite frontend. PostgreSQL is the only configured database. MongoDB, Motor, Redis, and Docker are not part of the current setup.
+The project is intentionally split into a FastAPI backend and a React + Vite frontend. PostgreSQL is the only configured database.
 
 ## Features
 
