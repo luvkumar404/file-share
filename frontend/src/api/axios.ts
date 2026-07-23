@@ -12,8 +12,11 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export function getApiError(error, fallback = "Something went wrong.") {
-  return error?.response?.data?.detail || error?.message || fallback;
+export function getApiError(error: unknown, fallback = "Something went wrong.") {
+  if (axios.isAxiosError<{ detail?: string }>(error)) {
+    return error.response?.data?.detail || error.message || fallback;
+  }
+  return error instanceof Error ? error.message : fallback;
 }
 
 export default api;

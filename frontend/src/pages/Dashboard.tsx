@@ -10,13 +10,14 @@ import FileTable from "../components/files/FileTable";
 import FileUpload from "../components/files/FileUpload";
 import ShareModal from "../components/files/ShareModal";
 import { useDeleteFile, useFiles } from "../hooks/useFiles";
+import type { StoredFile } from "../types";
 
 export default function Dashboard() {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFile, setSelectedFile] = useState<StoredFile | null>(null);
   const filesQuery = useFiles();
   const deleteMutation = useDeleteFile();
 
-  function handleDelete(fileId) {
+  function handleDelete(fileId: string) {
     deleteMutation.mutate(fileId, {
       onSuccess: () => toast.success("File deleted."),
       onError: (error) => toast.error(getApiError(error, "Could not delete file.")),

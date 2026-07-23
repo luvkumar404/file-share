@@ -9,6 +9,7 @@ import ShareModal from "../components/files/ShareModal";
 import { useDeleteFile, useFile } from "../hooks/useFiles";
 import { formatDate } from "../utils/formatDate";
 import { formatFileSize } from "../utils/formatFileSize";
+import type { LucideIcon } from "lucide-react";
 
 export default function FileDetails() {
   const { fileId } = useParams();
@@ -18,6 +19,7 @@ export default function FileDetails() {
   const deleteMutation = useDeleteFile();
 
   function handleDelete() {
+    if (!fileId) return;
     deleteMutation.mutate(fileId, {
       onSuccess: () => {
         toast.success("File deleted.");
@@ -42,7 +44,7 @@ export default function FileDetails() {
         <div className="surface p-6 text-sm text-red-600">
           {getApiError(fileQuery.error, "Could not load file details.")}
         </div>
-      ) : (
+      ) : file ? (
         <>
           <section className="surface overflow-hidden">
             <div className="border-b border-slate-200 bg-white p-6">
@@ -103,14 +105,22 @@ export default function FileDetails() {
             </p>
           </section>
         </>
-      )}
+      ) : null}
 
       {showShare && file && <ShareModal file={file} onClose={() => setShowShare(false)} />}
     </main>
   );
 }
 
-function Metadata({ icon: Icon, label, value }) {
+function Metadata({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string;
+}) {
   return (
     <div className="rounded-xl border border-slate-200 p-4">
       <div className="flex items-center gap-2 text-sm font-medium text-slate-500">

@@ -5,15 +5,17 @@ import { useParams } from "react-router-dom";
 
 import { getApiError } from "../api/axios";
 import { useDownloadSharedFile } from "../hooks/useShare";
+import type { SharedDownload } from "../types";
 
 export default function PublicShare() {
   const { token } = useParams();
   const [password, setPassword] = useState("");
-  const [download, setDownload] = useState(null);
+  const [download, setDownload] = useState<SharedDownload | null>(null);
 
   const mutation = useDownloadSharedFile();
 
   function handleGetDownloadLink() {
+    if (!token) return;
     mutation.mutate(
       { token, password: password || null },
       {

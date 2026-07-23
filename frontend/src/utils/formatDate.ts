@@ -1,4 +1,4 @@
-export function formatDate(value) {
+export function formatDate(value?: string | number | Date | null) {
   if (!value) return "Not available";
 
   return new Intl.DateTimeFormat("en", {
