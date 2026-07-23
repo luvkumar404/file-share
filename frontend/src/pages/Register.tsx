@@ -14,6 +14,7 @@ const registerSchema = z.object({
   email: z.string().email("Enter a valid email."),
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function Register() {
   const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function Register() {
     formState: { errors },
     handleSubmit,
     register,
-  } = useForm({ resolver: zodResolver(registerSchema) });
+  } = useForm<RegisterFormValues>({ resolver: zodResolver(registerSchema) });
 
   const mutation = useMutation({
     mutationFn: registerUser,
@@ -38,7 +39,7 @@ export default function Register() {
         <h1 className="text-2xl font-bold text-slate-950">Create your account</h1>
         <p className="mt-2 text-sm text-slate-500">Start uploading and sharing files securely.</p>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit(mutation.mutate)}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit((values) => mutation.mutate(values))}>
           <div>
             <label className="field-label" htmlFor="name">
               Name

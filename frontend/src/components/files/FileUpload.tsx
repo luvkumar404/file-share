@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import type { DragEvent } from "react";
 import { CheckCircle2, CloudUpload, FileWarning, ShieldCheck, X } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -11,13 +12,13 @@ import {
 } from "../../utils/constants";
 import { formatFileSize } from "../../utils/formatFileSize";
 
-function getExtension(fileName) {
+function getExtension(fileName: string) {
   return fileName.split(".").pop()?.toLowerCase() || "";
 }
 
 export default function FileUpload() {
-  const inputRef = useRef(null);
-  const [selectedFile, setSelectedFile] = useState(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [progress, setProgress] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -37,6 +38,7 @@ export default function FileUpload() {
   const uploadMutation = useUploadFile();
 
   function uploadSelectedFile() {
+    if (!selectedFile) return;
     uploadMutation.mutate(
       {
         file: selectedFile,
@@ -59,12 +61,12 @@ export default function FileUpload() {
     );
   }
 
-  function handleFile(file) {
+  function handleFile(file: File) {
     setSelectedFile(file);
     setProgress(0);
   }
 
-  function handleDrop(event) {
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setIsDragging(false);
     const file = event.dataTransfer.files?.[0];

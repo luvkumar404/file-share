@@ -14,6 +14,7 @@ const loginSchema = z.object({
   email: z.string().email("Enter a valid email."),
   password: z.string().min(1, "Password is required."),
 });
+type LoginFormValues = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const { saveLogin } = useAuth();
@@ -25,7 +26,7 @@ export default function Login() {
     formState: { errors },
     handleSubmit,
     register,
-  } = useForm({ resolver: zodResolver(loginSchema) });
+  } = useForm<LoginFormValues>({ resolver: zodResolver(loginSchema) });
 
   const mutation = useMutation({
     mutationFn: loginUser,
@@ -43,7 +44,7 @@ export default function Login() {
         <h1 className="text-2xl font-bold text-slate-950">Welcome back</h1>
         <p className="mt-2 text-sm text-slate-500">Log in to manage your secure files.</p>
 
-        <form className="mt-6 space-y-4" onSubmit={handleSubmit(mutation.mutate)}>
+        <form className="mt-6 space-y-4" onSubmit={handleSubmit((values) => mutation.mutate(values))}>
           <div>
             <label className="field-label" htmlFor="email">
               Email

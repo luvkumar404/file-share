@@ -1,4 +1,4 @@
-export function formatFileSize(bytes = 0) {
+export function formatFileSize(bytes: number = 0) {
   if (!bytes) return "0 B";
 
   const units = ["B", "KB", "MB", "GB"];

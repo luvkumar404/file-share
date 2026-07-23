@@ -7,14 +7,23 @@ import { z } from "zod";
 
 import { getApiError } from "../../api/axios";
 import { useCreateShareLink, useRevokeShareLink } from "../../hooks/useShare";
+import type { Share, StoredFile } from "../../types";
 
 const shareSchema = z.object({
   expiresAt: z.string().min(1, "Choose an expiry date and time."),
   password: z.string().optional(),
 });
 
-export default function ShareModal({ file, onClose }) {
-  const [createdShare, setCreatedShare] = useState(null);
+type ShareFormValues = z.infer<typeof shareSchema>;
+
+export default function ShareModal({
+  file,
+  onClose,
+}: {
+  file: StoredFile;
+  onClose: () => void;
+}) {
+  const [createdShare, setCreatedShare] = useState<Share | null>(null);
 
   const defaultExpiry = useMemo(() => {
     const date = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -25,7 +34,7 @@ export default function ShareModal({ file, onClose }) {
     formState: { errors },
     handleSubmit,
     register,
-  } = useForm({
+  } = useForm<ShareFormValues>({
     resolver: zodResolver(shareSchema),
     defaultValues: { expiresAt: defaultExpiry, password: "" },
   });
@@ -37,7 +46,7 @@ export default function ShareModal({ file, onClose }) {
   const createMutation = useCreateShareLink();
   const revokeMutation = useRevokeShareLink();
 
-  function handleCreateShare(values) {
+  function handleCreateShare(values: ShareFormValues) {
     createMutation.mutate(
       {
         fileId: file.id,
@@ -57,6 +66,7 @@ export default function ShareModal({ file, onClose }) {
   }
 
   function handleRevokeShare() {
+    if (!createdShare) return;
     revokeMutation.mutate(createdShare.id, {
       onSuccess: (share) => {
         setCreatedShare(share);

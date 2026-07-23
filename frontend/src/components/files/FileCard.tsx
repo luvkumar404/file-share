@@ -3,8 +3,16 @@ import { Link } from "react-router-dom";
 
 import { formatDate } from "../../utils/formatDate";
 import { formatFileSize } from "../../utils/formatFileSize";
+import type { StoredFile } from "../../types";
 
-export default function FileCard({ file, onDelete, onShare, isDeleting }) {
+interface FileCardProps {
+  file: StoredFile;
+  onDelete: (fileId: string) => void;
+  onShare: (file: StoredFile) => void;
+  isDeleting: boolean;
+}
+
+export default function FileCard({ file, onDelete, onShare, isDeleting }: FileCardProps) {
   return (
     <article className="surface p-4">
       <div className="flex items-start gap-3">

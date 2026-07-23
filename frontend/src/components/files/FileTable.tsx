@@ -3,8 +3,16 @@ import { Link } from "react-router-dom";
 
 import { formatDate } from "../../utils/formatDate";
 import { formatFileSize } from "../../utils/formatFileSize";
+import type { StoredFile } from "../../types";
 
-export default function FileTable({ files, onDelete, onShare, isDeleting }) {
+interface FileTableProps {
+  files: StoredFile[];
+  onDelete: (fileId: string) => void;
+  onShare: (file: StoredFile) => void;
+  isDeleting: boolean;
+}
+
+export default function FileTable({ files, onDelete, onShare, isDeleting }: FileTableProps) {
   return (
     <div className="surface hidden overflow-hidden lg:block">
       <table className="w-full text-left text-sm">

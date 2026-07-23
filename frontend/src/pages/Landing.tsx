@@ -1,5 +1,12 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Cloud, FileCheck2, LockKeyhole, ShieldCheck } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+
+const securitySteps: [string, string, LucideIcon][] = [
+  ["Validate file", "Allowed type and size confirmed", FileCheck2],
+  ["Scan for malware", "Clean result required before upload", ShieldCheck],
+  ["Store privately", "Cloudinary authenticated asset", Cloud],
+];
 
 export default function Landing() {
   return (
@@ -40,11 +47,7 @@ export default function Landing() {
               </div>
             </div>
             <div className="space-y-4 p-5">
-              {[
-                ["Validate file", "Allowed type and size confirmed", FileCheck2],
-                ["Scan for malware", "Clean result required before upload", ShieldCheck],
-                ["Store privately", "Cloudinary authenticated asset", Cloud],
-              ].map(([title, text, Icon]) => (
+              {securitySteps.map(([title, text, Icon]) => (
                 <div key={title} className="flex items-center gap-4 rounded-xl border border-slate-200 p-4">
                   <div className="grid h-11 w-11 place-items-center rounded-lg bg-slate-100 text-slate-700">
                     <Icon size={21} />

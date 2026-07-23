@@ -1,9 +1,10 @@
 import { Navigate, useLocation } from "react-router-dom";
+import type { ReactNode } from "react";
 
 import LoadingSkeleton from "../common/LoadingSkeleton";
 import { useAuth } from "../../hooks/useAuth";
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isCheckingAuth } = useAuth();
   const location = useLocation();
 

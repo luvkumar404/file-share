@@ -1,12 +1,24 @@
 import { createContext, useEffect, useMemo, useState } from "react";
+import type { Dispatch, ReactNode, SetStateAction } from "react";
 
 import { fetchCurrentUser } from "../api/authApi";
+import type { User } from "../types";
 
-export const AuthContext = createContext(null);
+export interface AuthContextValue {
+  isAuthenticated: boolean;
+  isCheckingAuth: boolean;
+  logout: () => void;
+  saveLogin: (accessToken: string) => void;
+  token: string | null;
+  user: User | null;
+  setUser: Dispatch<SetStateAction<User | null>>;
+}
 
-export function AuthProvider({ children }) {
+export const AuthContext = createContext<AuthContextValue | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState(() => localStorage.getItem("access_token"));
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(Boolean(token));
 
   useEffect(() => {
@@ -39,7 +51,7 @@ export function AuthProvider({ children }) {
     };
   }, [token]);
 
-  function saveLogin(accessToken) {
+  function saveLogin(accessToken: string) {
     localStorage.setItem("access_token", accessToken);
     setToken(accessToken);
   }
