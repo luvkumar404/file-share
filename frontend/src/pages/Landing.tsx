@@ -14,10 +14,10 @@ export default function Landing() {
       <section className="border-b border-slate-200 bg-white">
         <div className="page-shell grid min-h-[calc(100vh-4rem)] items-center gap-10 py-12 lg:grid-cols-[1fr_0.9fr]">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700">
+            {/* <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-700">
               <ShieldCheck size={16} />
               JWT protected uploads with malware scanning
-            </div>
+            </div> */}
             <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
               Secure file sharing for private documents.
             </h1>
@@ -41,7 +41,7 @@ export default function Landing() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-300">Secure upload</p>
-                  <h2 className="mt-1 text-xl font-semibold">project-contract.pdf</h2>
+                  <h2 className="mt-1 text-xl font-semibold">project-details.pdf</h2>
                 </div>
                 <LockKeyhole size={24} />
               </div>
