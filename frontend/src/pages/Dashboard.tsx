@@ -30,10 +30,10 @@ export default function Dashboard() {
     <main className="page-shell py-8">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+          {/* <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
             <ShieldCheck size={16} />
             Protected workspace
-          </p>
+          </p> */}
           <h1 className="mt-2 text-3xl font-bold text-slate-950">Dashboard</h1>
           <p className="mt-2 text-slate-500">
             Upload files, review metadata, and create secure share links.

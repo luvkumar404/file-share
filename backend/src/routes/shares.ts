@@ -119,9 +119,6 @@ sharesRouter.post("/:share_id/revoke", authMiddleware, async (c) => {
     data: { is_revoked: true },
   });
 
-  // Prisma does not return the relation directly without include, so we mimic FastAPI behavior
-  // which returns the share link with the file details ignored or whatever the schema specifies.
-  // We'll strip the included file object just in case.
   const { file, ...shareData } = { ...shareLink, is_revoked: true };
   return c.json(shareData);
 });

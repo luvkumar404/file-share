@@ -96,8 +96,8 @@ export default function FileUpload() {
             PDF, DOCX, TXT, PNG, JPG, JPEG up to {MAX_FILE_SIZE_MB} MB.
           </p>
         </div>
-        <div className="hidden rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700 sm:flex sm:items-center sm:gap-2">
-          <ShieldCheck size={16} />
+        <div className="flex items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 sm:text-sm">
+          <ShieldCheck size={15} className="shrink-0" />
           Malware scan
         </div>
       </div>
