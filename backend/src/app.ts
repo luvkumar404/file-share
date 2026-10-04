@@ -13,7 +13,8 @@ app.use("*", logger());
 app.use(
   "*",
   cors({
-    origin: env.FRONTEND_URL,
+    // The frontend is served from the same origin on Netlify; FRONTEND_URL is only needed for split local dev.
+    origin: env.FRONTEND_URL ?? ((origin) => origin),
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,

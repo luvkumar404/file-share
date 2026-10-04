@@ -1,18 +1,30 @@
 import { v2 as cloudinary } from "cloudinary";
+import { HTTPException } from "hono/http-exception";
 import { env } from "../config/env";
 
-cloudinary.config({
-  cloud_name: env.CLOUDINARY_CLOUD_NAME,
-  api_key: env.CLOUDINARY_API_KEY,
-  api_secret: env.CLOUDINARY_API_SECRET,
-  secure: true,
-});
+let configured = false;
+
+// Configure lazily so a missing Cloudinary setup only affects file operations, not the whole API.
+function ensureCloudinary() {
+  if (configured) return;
+  if (!env.CLOUDINARY_CLOUD_NAME || !env.CLOUDINARY_API_KEY || !env.CLOUDINARY_API_SECRET) {
+    throw new HTTPException(503, { message: "File storage is not configured. Set the Cloudinary environment variables." });
+  }
+  cloudinary.config({
+    cloud_name: env.CLOUDINARY_CLOUD_NAME,
+    api_key: env.CLOUDINARY_API_KEY,
+    api_secret: env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+  configured = true;
+}
 
 export async function uploadFileToCloudinary(
   fileBytes: Buffer,
   publicId: string,
   resourceType: "image" | "raw"
 ): Promise<{ public_id: string; resource_type: string }> {
+  ensureCloudinary();
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
@@ -39,6 +51,7 @@ export async function deleteFileFromCloudinary(
   publicId: string,
   resourceType: string
 ): Promise<void> {
+  ensureCloudinary();
   await cloudinary.uploader.destroy(publicId, {
     resource_type: resourceType,
     type: "authenticated",
@@ -60,6 +73,7 @@ export function createSignedDownloadUrl(
   extension: string,
   expiresAt: number
 ): string {
+  ensureCloudinary();
   const cleanPublicId = removeExtensionFromPublicId(publicId, extension);
   return cloudinary.utils.private_download_url(
     cleanPublicId,

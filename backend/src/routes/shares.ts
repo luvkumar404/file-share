@@ -1,8 +1,9 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { prisma } from "../lib/prisma";
+import { eq } from "drizzle-orm";
+import { db } from "../../db";
+import { files, shareLinks, accessLogs, type User } from "../../db/schema";
 import { authMiddleware } from "../middleware/auth";
-import { User } from "@prisma/client";
 import { ShareCreateSchema, PublicDownloadRequestSchema } from "../schemas/share";
 import { createShareToken } from "../utils/tokens";
 import { hashPassword, verifyPassword } from "../utils/security";
@@ -19,7 +20,7 @@ sharesRouter.post("/files/:file_id", authMiddleware, zValidator("json", ShareCre
     return c.json({ detail: "Invalid file ID." }, 400);
   }
 
-  const fileRecord = await prisma.file.findUnique({ where: { id: fileId } });
+  const [fileRecord] = await db.select().from(files).where(eq(files.id, fileId));
   if (!fileRecord || fileRecord.owner_id !== user.id) {
     return c.json({ detail: "File not found." }, 404);
   }
@@ -31,23 +32,22 @@ sharesRouter.post("/files/:file_id", authMiddleware, zValidator("json", ShareCre
   const passwordHash = password ? await hashPassword(password) : null;
   const token = createShareToken();
 
-  const shareLink = await prisma.$transaction(async (tx) => {
-    const share = await tx.shareLink.create({
-      data: {
+  const shareLink = await db.transaction(async (tx) => {
+    const [share] = await tx
+      .insert(shareLinks)
+      .values({
         file_id: fileRecord.id,
         token,
         password_hash: passwordHash,
         expires_at,
-      },
-    });
+      })
+      .returning();
 
-    await tx.accessLog.create({
-      data: {
-        user_id: user.id,
-        file_id: fileRecord.id,
-        action: "share_create",
-        ip_address: c.req.header("x-forwarded-for") || null,
-      },
+    await tx.insert(accessLogs).values({
+      user_id: user.id,
+      file_id: fileRecord.id,
+      action: "share_create",
+      ip_address: c.req.header("x-forwarded-for") || null,
     });
 
     return share;
@@ -60,7 +60,7 @@ sharesRouter.post("/:token/download", zValidator("json", PublicDownloadRequestSc
   const token = c.req.param("token");
   const { password } = c.req.valid("json");
 
-  const shareLink = await prisma.shareLink.findUnique({ where: { token } });
+  const [shareLink] = await db.select().from(shareLinks).where(eq(shareLinks.token, token));
   if (!shareLink || shareLink.is_revoked || shareLink.expires_at <= new Date()) {
     return c.json({ detail: "Share link is invalid or expired." }, 404);
   }
@@ -75,7 +75,7 @@ sharesRouter.post("/:token/download", zValidator("json", PublicDownloadRequestSc
     }
   }
 
-  const fileRecord = await prisma.file.findUnique({ where: { id: shareLink.file_id } });
+  const [fileRecord] = await db.select().from(files).where(eq(files.id, shareLink.file_id));
   if (!fileRecord) {
     return c.json({ detail: "File not found." }, 404);
   }
@@ -87,12 +87,10 @@ sharesRouter.post("/:token/download", zValidator("json", PublicDownloadRequestSc
     Math.floor(shareLink.expires_at.getTime() / 1000)
   );
 
-  await prisma.accessLog.create({
-    data: {
-      file_id: fileRecord.id,
-      action: "download",
-      ip_address: c.req.header("x-forwarded-for") || null,
-    },
+  await db.insert(accessLogs).values({
+    file_id: fileRecord.id,
+    action: "download",
+    ip_address: c.req.header("x-forwarded-for") || null,
   });
 
   return c.json({
@@ -103,22 +101,26 @@ sharesRouter.post("/:token/download", zValidator("json", PublicDownloadRequestSc
 
 sharesRouter.post("/:share_id/revoke", authMiddleware, async (c) => {
   const user = c.get("user");
-  const shareId = parseInt(c.req.param("share_id"), 10);
+  const shareId = parseInt(c.req.param("share_id") ?? "", 10);
 
   if (isNaN(shareId)) {
     return c.json({ detail: "Invalid share ID." }, 400);
   }
 
-  const shareLink = await prisma.shareLink.findUnique({ where: { id: shareId }, include: { file: true } });
-  if (!shareLink || shareLink.file.owner_id !== user.id) {
+  const [row] = await db
+    .select({ share: shareLinks, ownerId: files.owner_id })
+    .from(shareLinks)
+    .innerJoin(files, eq(shareLinks.file_id, files.id))
+    .where(eq(shareLinks.id, shareId));
+  if (!row || row.ownerId !== user.id) {
     return c.json({ detail: "Share link not found." }, 404);
   }
 
-  const updatedShare = await prisma.shareLink.update({
-    where: { id: shareId },
-    data: { is_revoked: true },
-  });
+  const [updatedShare] = await db
+    .update(shareLinks)
+    .set({ is_revoked: true })
+    .where(eq(shareLinks.id, shareId))
+    .returning();
 
-  const { file, ...shareData } = { ...shareLink, is_revoked: true };
-  return c.json(shareData);
+  return c.json(updatedShare);
 });
