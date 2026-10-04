@@ -22,7 +22,7 @@ const envResult = envSchema.safeParse(process.env);
 
 if (!envResult.success) {
   console.error("Invalid environment variables:", envResult.error.format());
-  process.exit(1);
+  throw new Error("Invalid environment variables. Check the backend configuration.");
 }
 
 export const env = envResult.data;
