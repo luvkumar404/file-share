@@ -1,6 +1,6 @@
 # Base directory is `backend` (set in the Netlify UI), so paths here are relative to it.
 [build]
-  command = "npx prisma generate && npm ci --prefix ../frontend && npm run build --prefix ../frontend"
+  command = "npm ci --prefix ../frontend && npm run build --prefix ../frontend"
   publish = "../frontend/dist"
   functions = "netlify/functions"
 
@@ -10,8 +10,6 @@
 
 [functions]
   node_bundler = "esbuild"
-  external_node_modules = ["@prisma/client"]
-  included_files = ["node_modules/.prisma/client/**", "prisma/schema.prisma"]
 
 # Client-side routing for the React SPA.
 [[redirects]]
