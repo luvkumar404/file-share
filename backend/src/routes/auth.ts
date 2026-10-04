@@ -1,29 +1,32 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { UserCreateSchema, LoginRequestSchema } from "../schemas/auth";
-import { prisma } from "../lib/prisma";
+import { eq } from "drizzle-orm";
+import { db } from "../../db";
+import { users, type User } from "../../db/schema";
 import { hashPassword, verifyPassword } from "../utils/security";
 import { createAccessToken } from "../utils/tokens";
 import { authMiddleware } from "../middleware/auth";
-import { User } from "@prisma/client";
 
 export const authRouter = new Hono<{ Variables: { user: User } }>();
 
 authRouter.post("/register", zValidator("json", UserCreateSchema), async (c) => {
   const { email, password } = c.req.valid("json");
 
-  const existingUser = await prisma.user.findUnique({ where: { email } });
+  const [existingUser] = await db.select().from(users).where(eq(users.email, email));
   if (existingUser) {
     return c.json({ detail: "A user with this email already exists." }, 409);
   }
 
   const hashedPassword = await hashPassword(password);
-  const user = await prisma.user.create({
-    data: {
-      email,
-      hashed_password: hashedPassword,
-    },
-  });
+  const [user] = await db
+    .insert(users)
+    .values({ email, hashed_password: hashedPassword })
+    .onConflictDoNothing({ target: users.email })
+    .returning();
+  if (!user) {
+    return c.json({ detail: "A user with this email already exists." }, 409);
+  }
 
   return c.json({
     id: user.id,
@@ -36,7 +39,7 @@ authRouter.post("/register", zValidator("json", UserCreateSchema), async (c) => 
 authRouter.post("/login", zValidator("json", LoginRequestSchema), async (c) => {
   const { email, password } = c.req.valid("json");
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const [user] = await db.select().from(users).where(eq(users.email, email));
   if (!user || !user.is_active) {
     return c.json({ detail: "Invalid email or password." }, 401);
   }
@@ -46,7 +49,7 @@ authRouter.post("/login", zValidator("json", LoginRequestSchema), async (c) => {
     return c.json({ detail: "Invalid email or password." }, 401);
   }
 
-  const accessToken = createAccessToken(user.id);
+  const accessToken = await createAccessToken(user.id);
   return c.json({ access_token: accessToken, token_type: "bearer" });
 });
 

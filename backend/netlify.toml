@@ -1,0 +1,18 @@
+# Base directory is `backend` (set in the Netlify UI), so paths here are relative to it.
+[build]
+  command = "npm ci --prefix ../frontend && npm run build --prefix ../frontend"
+  publish = "../frontend/dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  # The API is served by the `api` function on the same origin.
+  VITE_API_BASE_URL = "/api"
+
+[functions]
+  node_bundler = "esbuild"
+
+# Client-side routing for the React SPA.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
