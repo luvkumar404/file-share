@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import "./index.css";
 
@@ -20,13 +21,15 @@ const queryClient = new QueryClient({
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <App />
-          <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
-        </AuthProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <App />
+            <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
+          </AuthProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>,
 );

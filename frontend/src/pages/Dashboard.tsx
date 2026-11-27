@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Files, ShieldCheck } from "lucide-react";
+import { Files } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { getApiError } from "../api/axios";
@@ -14,7 +14,8 @@ import type { StoredFile } from "../types";
 
 export default function Dashboard() {
   const [selectedFile, setSelectedFile] = useState<StoredFile | null>(null);
-  const filesQuery = useFiles();
+  const [offset, setOffset] = useState(0);
+  const filesQuery = useFiles(offset);
   const deleteMutation = useDeleteFile();
 
   function handleDelete(fileId: string) {
@@ -40,7 +41,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="surface px-4 py-3">
-          <p className="text-sm text-slate-500">Total files</p>
+          <p className="text-sm text-slate-500">Files on this page</p>
           <p className="mt-1 text-2xl font-bold text-slate-950">{files.length}</p>
         </div>
       </div>
@@ -83,6 +84,11 @@ export default function Dashboard() {
               </div>
             </>
           )}
+          <div className="mt-4 flex items-center gap-3">
+            <button className="btn-secondary" disabled={offset === 0 || filesQuery.isFetching} onClick={() => setOffset(Math.max(0, offset - 100))}>Previous</button>
+            <span>Page {Math.floor(offset / 100) + 1}</span>
+            <button className="btn-secondary" disabled={files.length < 100 || filesQuery.isFetching} onClick={() => setOffset(offset + 100)}>Next</button>
+          </div>
         </section>
       </div>
 

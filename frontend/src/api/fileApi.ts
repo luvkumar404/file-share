@@ -2,8 +2,8 @@ import api from "./axios";
 import type { AxiosProgressEvent } from "axios";
 import type { StoredFile } from "../types";
 
-export async function fetchFiles(): Promise<StoredFile[]> {
-  const response = await api.get("/files");
+export async function fetchFiles(offset = 0): Promise<StoredFile[]> {
+  const response = await api.get("/files", { params: { offset } });
   return response.data;
 }
 

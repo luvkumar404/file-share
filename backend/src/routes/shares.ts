@@ -1,8 +1,11 @@
+import { env } from "../config/env";
+import { rateLimit } from "../middleware/rate-limit";
+import { parseId, publicShare } from "../utils/validation";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { prisma } from "../lib/prisma";
 import { authMiddleware } from "../middleware/auth";
-import { User } from "@prisma/client";
+import type { User } from "@prisma/client";
 import { ShareCreateSchema, PublicDownloadRequestSchema } from "../schemas/share";
 import { createShareToken } from "../utils/tokens";
 import { hashPassword, verifyPassword } from "../utils/security";
@@ -12,12 +15,8 @@ export const sharesRouter = new Hono<{ Variables: { user: User } }>();
 
 sharesRouter.post("/files/:file_id", authMiddleware, zValidator("json", ShareCreateSchema), async (c) => {
   const user = c.get("user");
-  const fileId = parseInt(c.req.param("file_id"), 10);
+  const fileId = parseId(c.req.param("file_id"));
   const { expires_at, password } = c.req.valid("json");
-
-  if (isNaN(fileId)) {
-    return c.json({ detail: "Invalid file ID." }, 400);
-  }
 
   const fileRecord = await prisma.file.findUnique({ where: { id: fileId } });
   if (!fileRecord || fileRecord.owner_id !== user.id) {
@@ -46,19 +45,20 @@ sharesRouter.post("/files/:file_id", authMiddleware, zValidator("json", ShareCre
         user_id: user.id,
         file_id: fileRecord.id,
         action: "share_create",
-        ip_address: c.req.header("x-forwarded-for") || null,
+        ip_address: c.req.header("x-real-ip")?.slice(0, 100) || null,
       },
     });
 
     return share;
   });
 
-  return c.json(shareLink, 201);
+  return c.json(publicShare(shareLink), 201);
 });
 
-sharesRouter.post("/:token/download", zValidator("json", PublicDownloadRequestSchema), async (c) => {
+sharesRouter.post("/:token/download", rateLimit("download", 20), zValidator("json", PublicDownloadRequestSchema), async (c) => {
   const token = c.req.param("token");
   const { password } = c.req.valid("json");
+  if (!/^[a-f0-9]{64}$/.test(token)) return c.json({ detail: "Invalid share link." }, 404);
 
   const shareLink = await prisma.shareLink.findUnique({ where: { token } });
   if (!shareLink || shareLink.is_revoked || shareLink.expires_at <= new Date()) {
@@ -84,14 +84,14 @@ sharesRouter.post("/:token/download", zValidator("json", PublicDownloadRequestSc
     fileRecord.cloudinary_public_id,
     fileRecord.cloudinary_resource_type,
     fileRecord.extension,
-    Math.floor(shareLink.expires_at.getTime() / 1000)
+    Math.min(Math.floor(shareLink.expires_at.getTime() / 1000), Math.floor(Date.now() / 1000) + env.DOWNLOAD_URL_TTL_SECONDS)
   );
 
   await prisma.accessLog.create({
     data: {
       file_id: fileRecord.id,
       action: "download",
-      ip_address: c.req.header("x-forwarded-for") || null,
+      ip_address: c.req.header("x-real-ip")?.slice(0, 100) || null,
     },
   });
 
@@ -103,11 +103,7 @@ sharesRouter.post("/:token/download", zValidator("json", PublicDownloadRequestSc
 
 sharesRouter.post("/:share_id/revoke", authMiddleware, async (c) => {
   const user = c.get("user");
-  const shareId = parseInt(c.req.param("share_id"), 10);
-
-  if (isNaN(shareId)) {
-    return c.json({ detail: "Invalid share ID." }, 400);
-  }
+  const shareId = parseId(c.req.param("share_id") ?? "");
 
   const shareLink = await prisma.shareLink.findUnique({ where: { id: shareId }, include: { file: true } });
   if (!shareLink || shareLink.file.owner_id !== user.id) {
@@ -119,6 +115,5 @@ sharesRouter.post("/:share_id/revoke", authMiddleware, async (c) => {
     data: { is_revoked: true },
   });
 
-  const { file, ...shareData } = { ...shareLink, is_revoked: true };
-  return c.json(shareData);
+  return c.json(publicShare(updatedShare));
 });

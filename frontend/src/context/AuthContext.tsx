@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { createContext, useEffect, useMemo, useState } from "react";
 import type { Dispatch, ReactNode, SetStateAction } from "react";
 
@@ -17,6 +18,7 @@ export interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [token, setToken] = useState(() => localStorage.getItem("access_token"));
   const [user, setUser] = useState<User | null>(null);
   const [isCheckingAuth, setIsCheckingAuth] = useState(Boolean(token));
@@ -35,8 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const currentUser = await fetchCurrentUser();
         if (!ignore) setUser(currentUser);
       } catch {
-        localStorage.removeItem("access_token");
         if (!ignore) {
+          localStorage.removeItem("access_token");
+          queryClient.clear();
           setToken(null);
           setUser(null);
         }
@@ -49,14 +52,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       ignore = true;
     };
-  }, [token]);
+  }, [token, queryClient]);
 
   function saveLogin(accessToken: string) {
+    queryClient.clear();
+    setUser(null);
+    setIsCheckingAuth(true);
     localStorage.setItem("access_token", accessToken);
     setToken(accessToken);
   }
 
   function logout() {
+    queryClient.clear();
     localStorage.removeItem("access_token");
     setToken(null);
     setUser(null);

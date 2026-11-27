@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteFile, fetchFile, fetchFiles, uploadFile } from "../api/fileApi";
 import type { AxiosProgressEvent } from "axios";
 
-export function useFiles() {
+export function useFiles(offset = 0) {
   return useQuery({
-    queryKey: ["files"],
-    queryFn: fetchFiles,
+    queryKey: ["files", offset],
+    queryFn: () => fetchFiles(offset),
   });
 }
 

@@ -35,6 +35,7 @@ model File {
   owner       User        @relation(fields: [owner_id], references: [id], onDelete: Cascade)
   share_links ShareLink[]
 
+  @@index([owner_id, created_at])
   @@map("files")
 }
 
@@ -49,6 +50,8 @@ model ShareLink {
 
   file File @relation(fields: [file_id], references: [id], onDelete: Cascade)
 
+  @@index([file_id])
+  @@index([expires_at])
   @@map("share_links")
 }
 
@@ -62,5 +65,14 @@ model AccessLog {
 
   user User? @relation(fields: [user_id], references: [id])
 
+  @@index([created_at])
+  @@index([user_id])
   @@map("access_logs")
+}
+
+model RateLimit {
+  key    String @id @db.VarChar(64)
+  bucket Int
+  count  Int
+  @@map("rate_limits")
 }

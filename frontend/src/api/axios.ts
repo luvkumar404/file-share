@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
+  timeout: 120000,
+  baseURL: import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "http://localhost:8000" : "/api"),
 });
 
 api.interceptors.request.use((config) => {
@@ -14,7 +15,8 @@ api.interceptors.request.use((config) => {
 
 export function getApiError(error: unknown, fallback = "Something went wrong.") {
   if (axios.isAxiosError<{ detail?: string }>(error)) {
-    return error.response?.data?.detail || error.message || fallback;
+    const detail = error.response?.data?.detail;
+    return typeof detail === "string" ? detail : error.message || fallback;
   }
   return error instanceof Error ? error.message : fallback;
 }

@@ -11,7 +11,7 @@ import type { Share, StoredFile } from "../../types";
 
 const shareSchema = z.object({
   expiresAt: z.string().min(1, "Choose an expiry date and time."),
-  password: z.string().optional(),
+  password: z.union([z.literal(""), z.string().min(8, "Use at least 8 characters.").max(128)]).optional(),
 });
 
 type ShareFormValues = z.infer<typeof shareSchema>;
@@ -27,7 +27,7 @@ export default function ShareModal({
 
   const defaultExpiry = useMemo(() => {
     const date = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    return date.toISOString().slice(0, 16);
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   }, []);
 
   const {
@@ -77,8 +77,10 @@ export default function ShareModal({
   }
 
   async function copyLink() {
-    await navigator.clipboard.writeText(shareUrl);
-    toast.success("Share link copied.");
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Share link copied.");
+    } catch { toast.error("Could not copy. Select and copy the link manually."); }
   }
 
   return (

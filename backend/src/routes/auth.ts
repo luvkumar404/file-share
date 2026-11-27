@@ -1,3 +1,4 @@
+import { rateLimit } from "../middleware/rate-limit";
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { UserCreateSchema, LoginRequestSchema } from "../schemas/auth";
@@ -5,11 +6,11 @@ import { prisma } from "../lib/prisma";
 import { hashPassword, verifyPassword } from "../utils/security";
 import { createAccessToken } from "../utils/tokens";
 import { authMiddleware } from "../middleware/auth";
-import { User } from "@prisma/client";
+import type { User } from "@prisma/client";
 
 export const authRouter = new Hono<{ Variables: { user: User } }>();
 
-authRouter.post("/register", zValidator("json", UserCreateSchema), async (c) => {
+authRouter.post("/register", rateLimit("register", 5, 300), zValidator("json", UserCreateSchema), async (c) => {
   const { email, password } = c.req.valid("json");
 
   const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -33,7 +34,7 @@ authRouter.post("/register", zValidator("json", UserCreateSchema), async (c) => 
   }, 201);
 });
 
-authRouter.post("/login", zValidator("json", LoginRequestSchema), async (c) => {
+authRouter.post("/login", rateLimit("login", 10, 300), zValidator("json", LoginRequestSchema), async (c) => {
   const { email, password } = c.req.valid("json");
 
   const user = await prisma.user.findUnique({ where: { email } });

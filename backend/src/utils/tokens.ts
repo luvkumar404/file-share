@@ -29,8 +29,9 @@ export function decodeAccessToken(token: string): number | null {
     const payload = jwt.verify(token, env.JWT_SECRET_KEY, {
       algorithms: [env.JWT_ALGORITHM as jwt.Algorithm],
     }) as jwt.JwtPayload;
-    if (payload.sub) {
-      return parseInt(payload.sub, 10);
+    if (typeof payload.sub === "string" && /^[1-9]\d*$/.test(payload.sub)) {
+      const id = Number(payload.sub);
+      return Number.isSafeInteger(id) && id <= 2147483647 ? id : null;
     }
     return null;
   } catch (error) {

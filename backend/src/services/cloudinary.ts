@@ -19,6 +19,7 @@ export async function uploadFileToCloudinary(
         public_id: publicId,
         resource_type: resourceType,
         overwrite: false,
+        timeout: 60000,
         type: "authenticated",
       },
       (error, result) => {
@@ -28,7 +29,7 @@ export async function uploadFileToCloudinary(
             public_id: result.public_id,
             resource_type: result.resource_type,
           });
-        }
+        } else reject(new Error("Storage returned no upload result"));
       }
     );
     uploadStream.end(fileBytes);
@@ -39,11 +40,12 @@ export async function deleteFileFromCloudinary(
   publicId: string,
   resourceType: string
 ): Promise<void> {
-  await cloudinary.uploader.destroy(publicId, {
+  const result = await cloudinary.uploader.destroy(publicId, {
     resource_type: resourceType,
     type: "authenticated",
     invalidate: true,
   });
+  if (result.result !== "ok" && result.result !== "not found") throw new Error("Storage deletion failed");
 }
 
 function removeExtensionFromPublicId(publicId: string, extension: string): string {
@@ -60,10 +62,10 @@ export function createSignedDownloadUrl(
   extension: string,
   expiresAt: number
 ): string {
-  const cleanPublicId = removeExtensionFromPublicId(publicId, extension);
+  const cleanPublicId = resourceType === "raw" ? publicId : removeExtensionFromPublicId(publicId, extension);
   return cloudinary.utils.private_download_url(
     cleanPublicId,
-    extension.toLowerCase(),
+    resourceType === "raw" ? "" : extension.toLowerCase(),
     {
       resource_type: resourceType,
       type: "authenticated",

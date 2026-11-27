@@ -16,6 +16,7 @@ export default function PublicShare() {
 
   function handleGetDownloadLink() {
     if (!token) return;
+    setDownload(null);
     mutation.mutate(
       { token, password: password || null },
       {
